@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<title>Мой мясной · упаковка</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700&family=Lora:ital,wght@1,400;1,500&display=swap">
+<style>
+  /* Тёмно-зелёная «витрина» в цветах бренда: пакет — главный объект, всё вокруг тихое */
+  :root {
+    --ground: #18241C;       /* фон страницы, глубокий зелёный бренда */
+    --ground-2: #213127;     /* панели и вкладки */
+    --line: #34473A;         /* разделители */
+    --paper: #F2EADD;        /* бумага пакета — основной текст */
+    --muted: #B9B4A4;        /* второстепенный текст */
+    --gold: #C9AB74;         /* акцент: росчерки с лица пакета */
+    --rust: #D08A5A;         /* поля для заполнения (как на макете) */
+    --f-head: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    --f-ital: 'Lora', Georgia, serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--paper); font-family: var(--f-head); font-size: 15px; line-height: 1.45; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  h1 { margin: 0; font-size: clamp(24px, 3.4vw, 34px); font-weight: 700; letter-spacing: .02em; text-wrap: balance; }
+  h1 em { font-family: var(--f-ital); font-weight: 400; color: var(--gold); letter-spacing: 0; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+  .seg { display: inline-flex; background: var(--ground-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 600 14px/1 var(--f-head); letter-spacing: .04em; text-transform: uppercase; padding: 9px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--paper); color: var(--ground); }
+  .seg button:focus-visible, .tool:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .stage { position: relative; border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 50% 35%, #2A3D30 0%, var(--ground) 70%); border: 1px solid var(--line); }
+  #view3d { display: block; width: 100%; height: min(72vh, 680px); min-height: 380px; touch-action: none; cursor: grab; }
+  #view3d:active { cursor: grabbing; }
+  .tools { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; }
+  .tool { appearance: none; border: 1px solid var(--line); background: rgba(24, 36, 28, .78); color: var(--paper); font: 600 13px/1 var(--f-head); letter-spacing: .04em; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+  .hint { position: absolute; left: 14px; bottom: 14px; color: var(--muted); font-size: 13px; pointer-events: none; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+  .flat { display: grid; gap: 10px; }
+  .flat .scroller { overflow: auto; border-radius: 14px; border: 1px solid var(--line); background: #fff; max-height: min(78vh, 760px); }
+  .flat img { display: block; width: 100%; max-width: none; height: auto; }
+  .flat.zoom img { width: 2600px; }
+  .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .spec { background: var(--ground-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .spec h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+  .spec p { margin: 0; color: var(--paper); }
+  .spec .muted { color: var(--muted); font-size: 14px; }
+  .dims { font-variant-numeric: tabular-nums; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; }
+  .dims dt { color: var(--muted); } .dims dd { margin: 0; font-weight: 600; }
+  .rust { color: var(--rust); }
+  @media (max-width: 560px) { .hint { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Мой мясной <em>· Активная формула</em></h1>
+    <div class="sub">Пакет с плоским дном, 4 размера · макет упаковки</div>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Режим">
+      <button id="m-bag" aria-pressed="true">3D</button>
+      <button id="m-line" aria-pressed="false">Линейка</button>
+      <button id="m-flat" aria-pressed="false">Развёртка</button>
+    </div>
+    <div class="seg" role="group" aria-label="Размер" id="sizes">
+      <button data-k="1kg" aria-pressed="false">1 кг</button>
+      <button data-k="3kg" aria-pressed="false">3 кг</button>
+      <button data-k="5kg" aria-pressed="false">5 кг</button>
+      <button data-k="10kg" aria-pressed="true">10 кг</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage3d">
+    <canvas id="view3d" aria-label="3D-модель пакета: потяните, чтобы повернуть"></canvas>
+    <div class="loading" id="loading">Загружаю пакет…</div>
+    <div class="hint" id="hint">Потяните, чтобы повернуть · колесо или щипок — масштаб</div>
+    <div class="tools">
+      <button class="tool" id="spin" aria-pressed="true">Вращение: вкл</button>
+      <button class="tool" id="reset">Сбросить вид</button>
+    </div>
+  </div>
+
+  <div class="flat" id="flat" hidden>
+    <div class="bar">
+      <div class="sub">Развёртка 1:1 с техническими линиями: рез, вылеты, швы, зип, сгибы, безопасная зона.</div>
+      <button class="tool" id="zoom">Крупно</button>
+    </div>
+    <div class="scroller"><img id="flatImg" alt="Развёртка пакета"></div>
+  </div>
+
+  <section class="specs" aria-label="Характеристики">
+    <div class="spec">
+      <h2>Формат</h2>
+      <dl class="dims" id="dims"></dl>
+    </div>
+    <div class="spec">
+      <h2>Стороны пакета</h2>
+      <p>Лицо, оборот, две боковые складки и дно. Боковины повторяют преимущества и вымпел «средние породы».</p>
+    </div>
+    <div class="spec">
+      <h2>Заполняет производитель</h2>
+      <p>Состав, пищевая ценность, нормы кормления, реквизиты, штрихкод и код маркировки — на макете это поля <span class="rust">[в скобках]</span>.</p>
+    </div>
+    <div class="spec">
+      <h2>Технические параметры</h2>
+      <p class="muted">Швы, положение зипа и вылеты ориентировочные. Финальная развёртка — по шаблону производителя пакетов.</p>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  var SIZES = {
+    '1kg':  { W: 200, H: 300, G: 80,  label: '1 кг'  },
+    '3kg':  { W: 250, H: 400, G: 100, label: '3 кг'  },
+    '5kg':  { W: 300, H: 460, G: 110, label: '5 кг'  },
+    '10kg': { W: 390, H: 600, G: 110, label: '10 кг' },
+  };
+  var ORDER = ['1kg', '3kg', '5kg', '10kg'];
+  var state = { size: '10kg', mode: 'bag', spin: true };
+  var MM = 0.01;                      // 1 мм = 0.01 единицы сцены
+
+  // ---------- сцена ----------
+  var canvas = document.getElementById('view3d');
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(30, 1, 0.05, 100);
+  var controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minPolarAngle = 0.15;
+  controls.maxPolarAngle = Math.PI / 2 - 0.04;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.9;
+
+  scene.add(new THREE.HemisphereLight(0xfff6e8, 0x22301f, 0.75));
+  var key = new THREE.DirectionalLight(0xfff3df, 0.95);
+  key.position.set(3, 6, 5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.radius = 6;
+  key.shadow.bias = -0.0004;
+  scene.add(key);
+  var fill = new THREE.DirectionalLight(0xdfe9ff, 0.35);
+  fill.position.set(-5, 3, -2);
+  scene.add(fill);
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.32 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ---------- геометрия пакета с плоским дном ----------
+  // Лицо/оборот: вертикальная часть, наклон к шву (боковины уходят внутрь треугольником) и верхний шов.
+  function profile(Wd, H, G) {
+    var fin = 12, Ls = 0.64 * G;
+    var rise = Math.sqrt(Ls * Ls - (G / 2) * (G / 2));
+    return { fin: fin, Ls: Ls, rise: rise, Hb: H - Ls - fin };
+  }
+  function gridGeometry(nu, nv, fn) {
+    var pos = [], uv = [], idx = [];
+    for (var j = 0; j <= nv; j++) {
+      for (var i = 0; i <= nu; i++) {
+        var u = i / nu, v = j / nv, p = fn(u, v);
+        pos.push(p[0] * MM, p[1] * MM, p[2] * MM);
+        uv.push(u, v);
+      }
+    }
+    for (j = 0; j < nv; j++) for (i = 0; i < nu; i++) {
+      var a = j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1;
+      idx.push(a, b, d, a, d, c);
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+  // Выпуклость наполненного пакета: ноль у дна (ровный край), максимум внизу-посередине, 0.6 к началу наклона
+  function fillCurve(s, P) {
+    var r = Math.min(1, s / (0.08 * P.Hb)), ramp = r * r * (3 - 2 * r);
+    return ramp * (1 - 0.4 * Math.pow(s / P.Hb, 2));
+  }
+  function facePoint(S, P, u, v, sign) {
+    var s = v * S.H, x = (u - 0.5) * S.W * sign, bulge = S.G * 0.07 * Math.sin(Math.PI * u);
+    var y, z;
+    if (s <= P.Hb) { y = s; z = S.G / 2 + bulge * fillCurve(s, P); }
+    else if (s <= P.Hb + P.Ls) { var t = (s - P.Hb) / P.Ls; y = P.Hb + t * P.rise; z = (S.G / 2 + bulge * 0.6) * (1 - t); }
+    else { y = P.Hb + P.rise + (s - P.Hb - P.Ls); z = 0.6; }
+    return [x, y, z * sign];
+  }
+  function gussetPoint(S, P, u, v, side) {
+    var s = v * S.H, zz = (u - 0.5) * S.G * (side < 0 ? 1 : -1);
+    var bul = S.G * 0.035 * Math.sin(Math.PI * u), x, y, z;
+    if (s <= P.Hb) { x = side * (S.W / 2 + bul * fillCurve(s, P)); y = s; z = zz; }
+    else { var t = Math.min(1, (s - P.Hb) / P.Ls); x = side * (S.W / 2 + bul * 0.6 * (1 - t)); y = P.Hb + t * P.rise; z = zz * (1 - t); }
+    return [x, y, z];
+  }
+
+  var loader = new THREE.TextureLoader();
+  var texCache = {};
+  // Текстура + обещание её загрузки: пакет показываем только когда загружены все его стороны
+  function tex(key, part) {
+    var k = key + '_' + part;
+    if (!texCache[k]) {
+      var entry = {};
+      entry.ready = new Promise(function (res) {
+        entry.t = loader.load('tex/' + k + '.jpg', res, undefined, res);
+      });
+      entry.t.encoding = THREE.sRGBEncoding;
+      entry.t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texCache[k] = entry;
+    }
+    return texCache[k];
+  }
+  function hideLoading() { document.getElementById('loading').hidden = true; }
+  function mat(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }); }
+
+  function makeBag(key) {
+    var S = SIZES[key], P = profile(S.W, S.H, S.G);
+    var g = new THREE.Group();
+    var T = { front: tex(key, 'front'), back: tex(key, 'back'), gl: tex(key, 'gl'), gr: tex(key, 'gr'), bottom: tex(key, 'bottom') };
+    var parts = [
+      [gridGeometry(24, 60, function (u, v) { return facePoint(S, P, u, v, 1); }), T.front],
+      [gridGeometry(24, 60, function (u, v) { return facePoint(S, P, u, v, -1); }), T.back],
+      [gridGeometry(10, 60, function (u, v) { return gussetPoint(S, P, u, v, -1); }), T.gl],
+      [gridGeometry(10, 60, function (u, v) { return gussetPoint(S, P, u, v, 1); }), T.gr],
+    ];
+    parts.forEach(function (p) {
+      var m = new THREE.Mesh(p[0], mat(p[1].t));
+      m.castShadow = true; m.receiveShadow = true;
+      g.add(m);
+    });
+    var bottom = new THREE.Mesh(new THREE.PlaneGeometry(S.W * MM, S.G * MM), mat(T.bottom.t));
+    bottom.rotation.x = Math.PI / 2;
+    bottom.position.y = 0.0005;
+    g.add(bottom);
+    g.userData.size = S;
+    g.visible = false;
+    g.userData.ready = Promise.all(Object.keys(T).map(function (k) { return T[k].ready; })).then(function () { g.visible = true; });
+    return g;
+  }
+
+  var current = null;
+  function build() {
+    if (current) { scene.remove(current); }
+    current = new THREE.Group();
+    if (state.mode === 'line') {
+      var x = 0, gap = 0.12, bags = ORDER.map(makeBag);
+      var total = bags.reduce(function (a, b) { return a + b.userData.size.W * MM; }, 0) + gap * (bags.length - 1);
+      x = -total / 2;
+      bags.forEach(function (b) {
+        var w = b.userData.size.W * MM;
+        b.position.x = x + w / 2;
+        b.rotation.y = -0.18;
+        x += w + gap;
+        current.add(b);
+      });
+    } else {
+      current.add(makeBag(state.size));
+    }
+    scene.add(current);
+    frame();
+    var waits = [];
+    current.traverse(function (o) { if (o.userData.ready) waits.push(o.userData.ready); });
+    document.getElementById('loading').hidden = false;
+    Promise.all(waits).then(hideLoading);
+  }
+
+  function frame() {
+    var box = new THREE.Box3().setFromObject(current);
+    var size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+    var r = Math.max(size.x, size.y * 1.05, size.z) * 0.5;
+    var dist = r / Math.tan((camera.fov * Math.PI / 180) / 2) * (state.mode === 'line' ? 0.95 : 1.35) * Math.max(1, 1.1 / camera.aspect);
+    controls.target.copy(center);
+    var dir = state.mode === 'line' ? new THREE.Vector3(0.05, 0.22, 1) : new THREE.Vector3(0.62, 0.32, 1);
+    camera.position.copy(center).add(dir.normalize().multiplyScalar(dist));
+    camera.near = dist / 50; camera.far = dist * 20; camera.updateProjectionMatrix();
+    key.shadow.camera.left = -r * 3; key.shadow.camera.right = r * 3; key.shadow.camera.top = r * 3; key.shadow.camera.bottom = -r * 3;
+    key.shadow.camera.updateProjectionMatrix();
+    controls.update();
+  }
+
+  function resize() {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', function () { resize(); });
+
+  function loop() {
+    controls.autoRotate = state.spin && state.mode === 'bag';
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- интерфейс ----------
+  function setPressed(sel, on) { document.querySelectorAll(sel).forEach(function (b) { b.setAttribute('aria-pressed', on(b) ? 'true' : 'false'); }); }
+  function updateDims() {
+    var S = SIZES[state.size];
+    document.getElementById('dims').innerHTML =
+      '<dt>Масса</dt><dd>' + S.label + '</dd>' +
+      '<dt>Лицо и оборот</dt><dd>' + S.W + ' × ' + S.H + ' мм</dd>' +
+      '<dt>Боковая складка</dt><dd>' + S.G + ' мм</dd>' +
+      '<dt>Дно</dt><dd>' + S.W + ' × ' + S.G + ' мм</dd>' +
+      '<dt>Развёртка</dt><dd>' + (2 * S.W + 2 * S.G) + ' × ' + (S.H + S.G) + ' мм</dd>';
+  }
+  function updateFlat() { document.getElementById('flatImg').src = 'dieline/' + state.size + '.jpg'; }
+  function setMode(m) {
+    state.mode = m;
+    setPressed('#m-bag,#m-line,#m-flat', function (b) { return b.id === 'm-' + m; });
+    var flat = m === 'flat';
+    document.getElementById('stage3d').hidden = flat;
+    document.getElementById('flat').hidden = !flat;
+    document.getElementById('sizes').style.visibility = m === 'line' ? 'hidden' : 'visible';
+    if (flat) { updateFlat(); return; }
+    resize(); build();
+  }
+  document.getElementById('m-bag').onclick = function () { setMode('bag'); };
+  document.getElementById('m-line').onclick = function () { setMode('line'); };
+  document.getElementById('m-flat').onclick = function () { setMode('flat'); };
+  document.querySelectorAll('#sizes button').forEach(function (b) {
+    b.onclick = function () {
+      state.size = b.dataset.k;
+      setPressed('#sizes button', function (x) { return x.dataset.k === state.size; });
+      updateDims();
+      if (state.mode === 'flat') updateFlat(); else build();
+    };
+  });
+  document.getElementById('spin').onclick = function () {
+    state.spin = !state.spin;
+    this.setAttribute('aria-pressed', state.spin ? 'true' : 'false');
+    this.textContent = 'Вращение: ' + (state.spin ? 'вкл' : 'выкл');
+  };
+  document.getElementById('reset').onclick = frame;
+  document.getElementById('zoom').onclick = function () {
+    var f = document.getElementById('flat'), on = !f.classList.contains('zoom');
+    f.classList.toggle('zoom', on);
+    this.textContent = on ? 'Целиком' : 'Крупно';
+  };
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    state.spin = false;
+    var sp = document.getElementById('spin'); sp.setAttribute('aria-pressed', 'false'); sp.textContent = 'Вращение: выкл';
+  }
+
+  updateDims();
+  resize();
+  build();
+  loop();
+})();
+</script>
